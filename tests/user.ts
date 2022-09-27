@@ -50,4 +50,3 @@ describe("user", () => {
     assert.ok(pdaUser.name === "Unknown")
   });
 });
-
