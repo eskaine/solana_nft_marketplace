@@ -35,7 +35,10 @@ describe("user", () => {
       new web3.PublicKey(program.programId)
     );
 
-    await program.methods
+    console.log({x: program.methods, wallet});
+    
+
+    const tx = await program.methods
       .createUser()
       .accounts({
         initializer: wallet.publicKey,
@@ -44,6 +47,9 @@ describe("user", () => {
       })
       .signers([wallet])
       .rpc();
+
+
+    console.log('test 2');
 
     const pdaUser = await program.account.user.fetch(pda);
 

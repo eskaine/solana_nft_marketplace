@@ -6,7 +6,7 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "new"
+name = "nft_marketplace"
 
 [features]
 no-entrypoint = []
@@ -16,4 +16,6 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { version = "0.25.0", features = ["init-if-needed"]}
+anchor-lang = { version = "0.25.0", features = ["init-if-needed"] }
+anchor-spl = { version = "0.25.0" }
+spl-token = {version = "3.3.0", features = ["no-entrypoint"]}
