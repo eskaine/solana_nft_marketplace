@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-
 pub use instructions::user::*;
 pub use instructions::mint::*;
 
@@ -15,7 +14,7 @@ pub mod nft_marketplace {
     pub fn create_user(ctx: Context<CreateUser>) -> Result<()> {
         instructions::user::create_user(ctx)
     }
-
+    
     pub fn initialize_mint(ctx: Context<InitializeMint>) -> Result<()> {
         instructions::mint::initialize_mint(ctx)
     }
