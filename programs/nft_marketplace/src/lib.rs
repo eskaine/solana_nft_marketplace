@@ -15,6 +15,10 @@ pub mod nft_marketplace {
         instructions::user::create_user(ctx)
     }
     
+    pub fn update_user(ctx: Context<UpdateUser>, name: String) -> Result<()> {
+        instructions::user::update_user(ctx, name)
+    }
+
     pub fn initialize_mint(ctx: Context<InitializeMint>) -> Result<()> {
         instructions::mint::initialize_mint(ctx)
     }

@@ -10,11 +10,12 @@ describe("user", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.NftMarketplace as Program<NftMarketplace>;
-  const wallet = anchor.web3.Keypair.generate();
+  const user = anchor.web3.Keypair.generate();
+
 
   it("initializes wallet account", async () => {
     const airdropWalletSig = await provider.connection.requestAirdrop(
-      wallet.publicKey,
+      user.publicKey,
       2e9
     );
 
@@ -30,7 +31,7 @@ describe("user", () => {
   it("create user", async () => {
     const [pda] = await web3.PublicKey.findProgramAddress(
       [
-        wallet.publicKey.toBuffer(),
+        user.publicKey.toBuffer(),
       ],
       new web3.PublicKey(program.programId)
     );
@@ -38,14 +39,42 @@ describe("user", () => {
     await program.methods
       .createUser()
       .accounts({
-        initializer: wallet.publicKey,
+        initializer: user.publicKey,
         userAccount: pda,
         systemProgram: SystemProgram.programId
       })
-      .signers([wallet])
+      .signers([user])
       .rpc();
 
     const pdaUser = await program.account.user.fetch(pda);
+
+    assert.ok(pdaUser.name === "Unknown")
+  });
+
+  it("update user", async () => {
+    const [pda] = await web3.PublicKey.findProgramAddress(
+      [
+        user.publicKey.toBuffer(),
+      ],
+      new web3.PublicKey(program.programId)
+    );
+
+      console.log({program: program.methods, pda});
+
+    await program.methods
+      .updateUser("David")
+      .accounts({
+        initializer: user.publicKey,
+        userAccount: pda,
+        systemProgram: SystemProgram.programId
+      })
+      .signers([user])
+      .rpc();
+
+    const pdaUser = await program.account.user.fetch(pda);
+
+    console.log({methods: pdaUser});
+
 
     assert.ok(pdaUser.name === "Unknown")
   });

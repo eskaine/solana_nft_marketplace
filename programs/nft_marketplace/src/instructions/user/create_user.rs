@@ -12,8 +12,8 @@ pub struct CreateUser<'info> {
       seeds = [initializer.key.as_ref()],
       bump,
       payer = initializer,
-      space = 8 + USER_SIZE,
-      constraint = 32 + (4 + DEFAULT_NAME.to_owned().len()) <= 1000
+      space = USER_SIZE,
+      constraint = 32 + (4 + DEFAULT_NAME.to_owned().len()) <= USER_SIZE
   )]
   pub user_account: Account<'info, User>,
   pub system_program: Program<'info, System>

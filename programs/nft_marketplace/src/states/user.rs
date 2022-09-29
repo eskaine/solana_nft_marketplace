@@ -1,7 +1,8 @@
 use anchor_lang::{prelude::*, solana_program};
 use solana_program::program_pack::{IsInitialized, Sealed};
 
-pub const USER_SIZE: usize = 24 //NAME
+pub const NAME_SIZE: usize = 4 + 24;
+pub const USER_SIZE: usize = NAME_SIZE //NAME
     + 32; // ADDRESS
 
 #[account]
