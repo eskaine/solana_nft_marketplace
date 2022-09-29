@@ -1,3 +1,2 @@
-pub mod shared;
 pub mod user;
-pub mod mint;
+pub mod token;

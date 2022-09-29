@@ -52,6 +52,7 @@ describe("user", () => {
   });
 
   it("update user", async () => {
+    const name = "David";
     const [pda] = await web3.PublicKey.findProgramAddress(
       [
         user.publicKey.toBuffer(),
@@ -59,10 +60,8 @@ describe("user", () => {
       new web3.PublicKey(program.programId)
     );
 
-      console.log({program: program.methods, pda});
-
     await program.methods
-      .updateUser("David")
+      .updateUser(name)
       .accounts({
         initializer: user.publicKey,
         userAccount: pda,
@@ -73,9 +72,6 @@ describe("user", () => {
 
     const pdaUser = await program.account.user.fetch(pda);
 
-    console.log({methods: pdaUser});
-
-
-    assert.ok(pdaUser.name === "Unknown")
+    assert.ok(pdaUser.name === name)
   });
 });

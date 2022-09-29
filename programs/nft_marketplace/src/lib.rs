@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 pub use instructions::user::*;
-pub use instructions::mint::*;
+pub use instructions::token::*;
 
 pub mod instructions;
 pub mod states;
@@ -19,8 +19,8 @@ pub mod nft_marketplace {
         instructions::user::update_user(ctx, name)
     }
 
-    pub fn initialize_mint(ctx: Context<InitializeMint>) -> Result<()> {
-        instructions::mint::initialize_mint(ctx)
+    pub fn initialize_mint(ctx: Context<CreateToken>) -> Result<()> {
+        instructions::token::create_token::handler(ctx)
     }
 }
 

@@ -9,7 +9,6 @@ pub const USER_SIZE: usize = NAME_SIZE //NAME
 pub struct User {
     pub is_initialized: bool,
     pub name: String,
-    pub address: Pubkey,
 }
 
 impl Sealed for User {}
