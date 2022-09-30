@@ -12,8 +12,6 @@ describe("token", () => {
   const program = anchor.workspace.NftMarketplace as Program<NftMarketplace>;
   const user = anchor.web3.Keypair.generate();
   const mint = anchor.web3.Keypair.generate();
-  let nftToken: PublicKey = null;
-
 
   it("initializes wallet account", async () => {
     const airdropWalletSig = await provider.connection.requestAirdrop(
@@ -55,7 +53,7 @@ describe("token", () => {
     });
 
     await program.methods
-        .createToken("myToken")
+        .createToken()
         .accounts({
           user: user.publicKey,
           mint: mint.publicKey,

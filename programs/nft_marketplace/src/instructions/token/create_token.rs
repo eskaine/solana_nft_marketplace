@@ -9,7 +9,6 @@ const SPACE: u64 = 82;
 const MAX_TOKEN_AMOUNT: u64 = 1;
 
 #[derive(Accounts)]
-#[instruction(nft_name: String)]
 pub struct CreateToken<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
@@ -92,6 +91,7 @@ impl<'info> CreateToken<'info> {
 
     fn mint_to_token_account(&self) -> Result<()> {
         msg!("Minting token to token account...");
+        println!("hello there!");
 
         let mint_to = MintTo {
             mint: self.mint.to_account_info().clone(),
@@ -111,7 +111,7 @@ impl<'info> CreateToken<'info> {
     }
 }
 
-pub fn handler(ctx: Context<CreateToken>, _nft_name: String) -> Result<()> {
+pub fn handler(ctx: Context<CreateToken>) -> Result<()> {
     ctx.accounts.create_mint_account()?;
     ctx.accounts.initialize_mint()?;
     ctx.accounts.create_token()?;

@@ -19,8 +19,8 @@ pub mod nft_marketplace {
         instructions::user::update_user(ctx, name)
     }
 
-    pub fn create_token(ctx: Context<CreateToken>, nft_name: String) -> Result<()> {
-        instructions::token::create_token::handler(ctx, nft_name)
+    pub fn create_token(ctx: Context<CreateToken>) -> Result<()> {
+        instructions::token::create_token::handler(ctx)
     }
 }
 
