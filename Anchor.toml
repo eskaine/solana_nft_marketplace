@@ -2,14 +2,14 @@
 seeds = false
 skip-lint = false
 [programs.devnet]
-nft_marketplace = "EDZSvPjAq1NnENrc1vteT7CbegbCTgeR2t1Z9QyEGdKH"
+nft_marketplace = "CexBmrzVQBJB9BKy2ujzVppkyL85jFVxxSWQ9BiWXspc"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "devnet"
-wallet = "/Users/eskaine/.config/solana/id.json"
+wallet = "/Users/eskaine/.config/solana/nft-marketplace-id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

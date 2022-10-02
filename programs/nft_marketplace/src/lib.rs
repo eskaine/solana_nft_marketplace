@@ -5,7 +5,7 @@ pub use instructions::token::*;
 pub mod instructions;
 pub mod states;
 
-declare_id!("EDZSvPjAq1NnENrc1vteT7CbegbCTgeR2t1Z9QyEGdKH");
+declare_id!("CexBmrzVQBJB9BKy2ujzVppkyL85jFVxxSWQ9BiWXspc");
 
 #[program]
 pub mod nft_marketplace {
