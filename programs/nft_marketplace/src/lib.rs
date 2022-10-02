@@ -5,7 +5,7 @@ pub use instructions::token::*;
 pub mod instructions;
 pub mod states;
 
-declare_id!("3emUs6bwmP7StdKakHe8pdbmLjhpZBsKuymy2sNHVxtL");
+declare_id!("EDZSvPjAq1NnENrc1vteT7CbegbCTgeR2t1Z9QyEGdKH");
 
 #[program]
 pub mod nft_marketplace {
@@ -19,8 +19,14 @@ pub mod nft_marketplace {
         instructions::user::update_user(ctx, name)
     }
 
-    pub fn create_token(ctx: Context<CreateToken>) -> Result<()> {
-        instructions::token::create_token::handler(ctx)
+    pub fn create_nft(
+        ctx: Context<CreateNft>, 
+        metadata_title: String, 
+        metadata_symbol: String,
+        metadata_uri: String,
+        token_info_bump: u8
+    ) -> Result<()> {
+        instructions::token::create_nft::handler(ctx, metadata_title, metadata_symbol, metadata_uri, token_info_bump)
     }
 }
 

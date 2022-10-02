@@ -2,16 +2,25 @@ import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import * as web3 from "@solana/web3.js";
 import { PublicKey } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { NftMarketplace } from "../target/types/nft_marketplace";
 
 describe("token", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
+  const nftTitle = "Beta";
+  const nftSymbol = "BETA";
+  const nftUri = "https://raw.githubusercontent.com/Coding-and-Crypto/Solana-NFT-Marketplace/master/assets/example.json";
+
   const program = anchor.workspace.NftMarketplace as Program<NftMarketplace>;
   const user = anchor.web3.Keypair.generate();
   const mint = anchor.web3.Keypair.generate();
+  const metadataId = anchor.web3.Keypair.generate();
+
+  let tokenInfo: PublicKey = null;
+  let nftToken: PublicKey = null;
+  let metadata: PublicKey = null;
+  let tokenInfoBump: number = null;
 
   it("initializes wallet account", async () => {
     const airdropWalletSig = await provider.connection.requestAirdrop(
@@ -47,17 +56,42 @@ describe("token", () => {
   });
 
   it("initialize mint", async () => {
-    const nftToken = await anchor.utils.token.associatedAddress({
+    nftToken = await anchor.utils.token.associatedAddress({
       mint: mint.publicKey,
       owner: user.publicKey
     });
 
+    let [_tokenInfo, _tokenInfoBump] = await PublicKey.findProgramAddress(
+      [
+        user.publicKey.toBuffer(),
+        nftToken.toBytes(),
+        mint.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+    tokenInfo = _tokenInfo;
+    tokenInfoBump = _tokenInfoBump;
+
+    const [_metadata] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("metadata"),
+        metadataId.publicKey.toBuffer(),
+        mint.publicKey.toBuffer(),
+      ],
+      metadataId.publicKey
+    );
+    metadata = _metadata;
+
     await program.methods
-        .createToken()
+        .createNft(nftTitle, nftSymbol, nftUri, tokenInfoBump)
         .accounts({
           user: user.publicKey,
           mint: mint.publicKey,
           nftToken: nftToken,
-    }).signers([user, mint]).rpc();
+          tokenInfo: tokenInfo,
+          metadata: metadata,
+    })
+    .signers([user, mint])
+    .rpc();
   });
 });
