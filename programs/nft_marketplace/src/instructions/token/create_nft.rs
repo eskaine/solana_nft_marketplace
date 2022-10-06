@@ -167,9 +167,9 @@ impl<'info> CreateNft<'info> {
 pub fn handler(
     ctx: Context<CreateNft>, 
     metadata_title: String, 
-    _metadata_symbol: String, 
-    _metadata_uri: String,
-    _token_info_bump: u8
+    metadata_symbol: String, 
+    metadata_uri: String,
+    token_info_bump: u8
 ) -> Result<()> {
     msg!("Creating metadata... {}", metadata_title);
 
@@ -177,6 +177,8 @@ pub fn handler(
     ctx.accounts.initialize_mint()?;
     ctx.accounts.create_token()?;
     ctx.accounts.mint_to_token_account()?;
+    ctx.accounts.create_metadata(metadata_title, metadata_symbol, metadata_uri)?;
+
 
     Ok(())
 }
