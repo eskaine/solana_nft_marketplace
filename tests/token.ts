@@ -15,7 +15,9 @@ describe("token", () => {
   const program = anchor.workspace.NftMarketplace as Program<NftMarketplace>;
   const user = anchor.web3.Keypair.generate();
   const mint = anchor.web3.Keypair.generate();
-  const metadataId = anchor.web3.Keypair.generate();
+  const metadataId = new anchor.web3.PublicKey(
+    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+  );
 
   let tokenInfo: PublicKey = null;
   let nftToken: PublicKey = null;
@@ -75,10 +77,10 @@ describe("token", () => {
     const [_metadata] = await PublicKey.findProgramAddress(
       [
         Buffer.from("metadata"),
-        metadataId.publicKey.toBuffer(),
+        metadataId.toBuffer(),
         mint.publicKey.toBuffer(),
       ],
-      metadataId.publicKey
+      metadataId
     );
     metadata = _metadata;
 
@@ -90,6 +92,7 @@ describe("token", () => {
           nftToken: nftToken,
           tokenInfo: tokenInfo,
           metadata: metadata,
+          tokenMetadataProgram: metadataId,
     })
     .signers([user, mint])
     .rpc();
