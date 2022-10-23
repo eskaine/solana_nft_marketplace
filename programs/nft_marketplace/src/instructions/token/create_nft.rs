@@ -3,7 +3,8 @@ use anchor_lang::solana_program::program::invoke;
 use anchor_lang::system_program::{ self, CreateAccount };
 use anchor_spl::token::{ self, InitializeMint, MintTo, Token };
 use anchor_spl::associated_token:: { self, Create, AssociatedToken };
-use mpl_token_metadata::{ID, instruction as token_instruction};
+use mpl_token_metadata::state::Creator;
+use mpl_token_metadata::{instruction as token_instruction};
 use crate::states::*;
 
 const MINT_DECIMALS: u8 = 0;
@@ -32,6 +33,8 @@ pub struct CreateNft<'info> {
     /// CHECK: Creating account...
     #[account(mut)]
     pub metadata: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub token_metadata_program: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
     pub token_program: Program<'info, Token>,
@@ -131,10 +134,18 @@ impl<'info> CreateNft<'info> {
         metadata_uri: String,
     ) -> Result<()> {
         msg!("Creating metadata...");
+
+        let creator = vec![
+            Creator {
+                address: self.user.key(),
+                verified: false,
+                share:100,
+            }
+        ];
     
         invoke(
             &token_instruction::create_metadata_accounts_v3(
-                ID.key(), 
+                self.token_metadata_program.key(), 
                 self.metadata.key(), 
                 self.mint.key(), 
                 self.user.key(), 
@@ -143,7 +154,7 @@ impl<'info> CreateNft<'info> {
                 metadata_title, 
                 metadata_symbol, 
                 metadata_uri, 
-                None,
+                Some(creator),
                 1,
                 true, 
                 false, 
@@ -152,10 +163,12 @@ impl<'info> CreateNft<'info> {
                 None
             ),
             &[
-                self.metadata.to_account_info().clone(), 
-                self.mint.to_account_info().clone(), 
-                self.nft_token.to_account_info().clone(), 
+                self.metadata.to_account_info().clone(),
+                self.mint.to_account_info().clone(),
                 self.user.to_account_info().clone(), 
+                self.token_metadata_program.to_account_info().clone(),
+                self.token_program.to_account_info().clone(),
+                self.system_program.to_account_info().clone(),
                 self.rent.to_account_info().clone(), 
             ],
         )?;
