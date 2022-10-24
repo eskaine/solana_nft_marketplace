@@ -22,6 +22,8 @@ describe("token", () => {
   let nftToken: PublicKey = null;
   let metadata: PublicKey = null;
 
+  const royalty = 0;
+
   it("initializes wallet account", async () => {
     const airdropWalletSig = await provider.connection.requestAirdrop(
       user.publicKey,
@@ -61,8 +63,6 @@ describe("token", () => {
       owner: user.publicKey
     });
 
-    const royalty = 0;
-
     const [_metadata] = await PublicKey.findProgramAddress(
       [
         Buffer.from("metadata"),
@@ -85,6 +85,5 @@ describe("token", () => {
     })
     .signers([user, mint])
     .rpc();
-
   });
 });

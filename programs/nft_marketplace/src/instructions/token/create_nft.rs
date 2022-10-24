@@ -31,6 +31,7 @@ pub struct CreateNft<'info> {
     pub token_metadata_program: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
@@ -40,7 +41,7 @@ pub fn create_nft(
     metadata_title: String,
     metadata_symbol: String,
     metadata_uri: String,
-    royalty: u16
+    royalty: u16,
 ) -> Result<()> {
     msg!("Creating NFT...");
 
@@ -81,10 +82,7 @@ pub fn create_nft(
     };
 
     associated_token::create(
-        CpiContext::new(
-            ctx.accounts.associated_token_program.to_account_info().clone(), 
-            token
-        )
+        CpiContext::new(ctx.accounts.associated_token_program.to_account_info().clone(), token)
     )?;
 
     msg!("Minting...");
@@ -92,7 +90,7 @@ pub fn create_nft(
     let mint_to = MintTo {
         mint: ctx.accounts.mint.to_account_info().clone(),
         to: ctx.accounts.nft_token.to_account_info().clone(),
-        authority: ctx.accounts.mint_authority.to_account_info().clone(),
+        authority: ctx.accounts.payer.to_account_info().clone(),
     };
 
     token::mint_to(
@@ -114,32 +112,32 @@ pub fn create_nft(
 
     invoke(
         &create_metadata_accounts_v3(
-            ctx.accounts.token_metadata_program.key(), 
-            ctx.accounts.metadata.key(), 
-            ctx.accounts.mint.key(), 
-            ctx.accounts.mint_authority.key(), 
-            ctx.accounts.mint_authority.key(), 
-            ctx.accounts.mint_authority.key(), 
-            metadata_title, 
-            metadata_symbol, 
-            metadata_uri, 
+            ctx.accounts.token_metadata_program.key(),
+            ctx.accounts.metadata.key(),
+            ctx.accounts.mint.key(),
+            ctx.accounts.mint_authority.key(),
+            ctx.accounts.payer.key(),
+            ctx.accounts.payer.key(),
+            metadata_title,
+            metadata_symbol,
+            metadata_uri,
             creator,
             royalty,
-            true, 
-            false, 
-            None, 
+            true,
+            false,
+            None,
             None,
             None
         ),
         &[
             ctx.accounts.metadata.to_account_info().clone(),
             ctx.accounts.mint.to_account_info().clone(),
-            ctx.accounts.mint_authority.to_account_info().clone(), 
-            ctx.accounts.token_metadata_program.to_account_info().clone(),
-            ctx.accounts.token_program.to_account_info().clone(),
+            ctx.accounts.mint_authority.to_account_info().clone(),
+            ctx.accounts.payer.to_account_info().clone(),
+            ctx.accounts.mint_authority.to_account_info().clone(),
             ctx.accounts.system_program.to_account_info().clone(),
-            ctx.accounts.rent.to_account_info().clone(), 
-        ],
+            ctx.accounts.rent.to_account_info().clone(),
+        ]
     )?;
 
     Ok(())
