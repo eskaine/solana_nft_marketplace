@@ -24,9 +24,9 @@ pub mod nft_marketplace {
         metadata_title: String, 
         metadata_symbol: String,
         metadata_uri: String,
-        token_info_bump: u8
+        royalty: u16
     ) -> Result<()> {
-        instructions::token::create_nft::handler(ctx, metadata_title, metadata_symbol, metadata_uri, token_info_bump)
+        instructions::token::create_nft(ctx, metadata_title, metadata_symbol, metadata_uri, royalty)
     }
 }
 

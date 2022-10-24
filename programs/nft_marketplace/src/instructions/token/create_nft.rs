@@ -2,35 +2,29 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke;
 use anchor_lang::system_program::{ self, CreateAccount };
 use anchor_spl::token::{ self, InitializeMint, MintTo, Token };
-use anchor_spl::associated_token:: { self, Create, AssociatedToken };
+use anchor_spl::associated_token::{ self, Create, AssociatedToken };
 use mpl_token_metadata::state::Creator;
-use mpl_token_metadata::{instruction as token_instruction};
-use crate::states::*;
+use mpl_token_metadata::instruction::{ create_metadata_accounts_v3 };
 
 const MINT_DECIMALS: u8 = 0;
 const LAMPORTS: u64 = 10000000;
-const SPACE: u64 = 82;
+const MINT_SIZE: u64 = 82;
 const MAX_TOKEN_AMOUNT: u64 = 1;
 
 #[derive(Accounts)]
-#[instruction(metadata_title: String, metadata_symbol: String, metadata_uri: String, token_info_bump: u8)]
+#[instruction(metadata_title: String, metadata_symbol: String, metadata_uri: String, royalty: u16)]
 pub struct CreateNft<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub payer: AccountInfo<'info>,
+    #[account(mut)]
+    pub mint_authority: Signer<'info>,
     #[account(mut)]
     pub mint: Signer<'info>,
-    /// CHECK: Creating account...
+    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
     pub nft_token: UncheckedAccount<'info>,
-    #[account(
-        init,
-        payer = user,
-        space = 8 + TOKEN_INFO_SIZE,
-        seeds = [user.key().as_ref(), nft_token.key().as_ref(), mint.key().as_ref()],
-        bump
-    )]
-    pub token_info: Account<'info, TokenInfo>,
-    /// CHECK: Creating account...
+    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
     pub metadata: UncheckedAccount<'info>,
     /// CHECK: This is not dangerous because we don't read or write from this account
@@ -41,157 +35,112 @@ pub struct CreateNft<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-impl<'info> CreateNft<'info> {
-    fn create_mint_account(&self) -> Result<()> {
-        msg!("Creating mint account...");
-
-        let mint_account = CreateAccount {
-            from: self.user.to_account_info().clone(),
-            to: self.mint.to_account_info().clone()
-        };
-    
-        system_program::create_account(
-            CpiContext::new(
-                self.token_program.to_account_info().clone(), 
-                mint_account
-            ),
-            LAMPORTS,
-            SPACE,
-            &self.token_program.key()
-        )?;
-
-        Ok(())
-    }
-
-    fn initialize_mint(&self) -> Result<()> {
-        msg!("Initializing mint...");
-
-        let mint = InitializeMint {
-            mint: self.mint.to_account_info().clone(),
-            rent: self.rent.to_account_info().clone()        
-        };
-
-        token::initialize_mint(
-            CpiContext::new(
-                self.token_program.to_account_info().clone(), 
-                mint
-            ),
-            MINT_DECIMALS,
-            &self.user.key(),
-            Some(&self.user.key())
-        )?;
-
-        Ok(())
-    }
-
-    fn create_token(&self) -> Result<()> {
-        msg!("Creating token...");
-
-        let token = Create {
-            payer: self.user.to_account_info().clone(),
-            associated_token: self.nft_token.to_account_info().clone(),
-            authority: self.user.to_account_info().clone(),
-            mint: self.mint.to_account_info().clone(),
-            system_program: self.system_program.to_account_info().clone(),
-            token_program: self.token_program.to_account_info().clone(),
-            rent: self.rent.to_account_info().clone()
-        };
-
-        associated_token::create(
-            CpiContext::new(
-                self.associated_token_program.to_account_info().clone(), 
-                token
-            ),
-        )?;
-
-        Ok(())
-    }
-
-    fn mint_to_token_account(&self) -> Result<()> {
-        msg!("Minting token to token account...");
-
-        let mint_to = MintTo {
-            mint: self.mint.to_account_info().clone(),
-            to: self.nft_token.to_account_info().clone(),
-            authority: self.user.to_account_info().clone(),
-        };
-
-        token::mint_to(
-            CpiContext::new(
-                self.token_program.to_account_info().clone(), 
-                mint_to
-            ),
-            MAX_TOKEN_AMOUNT
-        )?;
-
-        Ok(())
-    }
-
-    fn create_metadata(
-        &self,
-        metadata_title: String, 
-        metadata_symbol: String, 
-        metadata_uri: String,
-    ) -> Result<()> {
-        msg!("Creating metadata...");
-
-        let creator = vec![
-            Creator {
-                address: self.user.key(),
-                verified: false,
-                share:100,
-            }
-        ];
-    
-        invoke(
-            &token_instruction::create_metadata_accounts_v3(
-                self.token_metadata_program.key(), 
-                self.metadata.key(), 
-                self.mint.key(), 
-                self.user.key(), 
-                self.user.key(), 
-                self.user.key(), 
-                metadata_title, 
-                metadata_symbol, 
-                metadata_uri, 
-                Some(creator),
-                1,
-                true, 
-                false, 
-                None, 
-                None,
-                None
-            ),
-            &[
-                self.metadata.to_account_info().clone(),
-                self.mint.to_account_info().clone(),
-                self.user.to_account_info().clone(), 
-                self.token_metadata_program.to_account_info().clone(),
-                self.token_program.to_account_info().clone(),
-                self.system_program.to_account_info().clone(),
-                self.rent.to_account_info().clone(), 
-            ],
-        )?;
-    
-        Ok(())
-    }
-}
-
-pub fn handler(
-    ctx: Context<CreateNft>, 
-    metadata_title: String, 
-    metadata_symbol: String, 
+pub fn create_nft(
+    ctx: Context<CreateNft>,
+    metadata_title: String,
+    metadata_symbol: String,
     metadata_uri: String,
-    token_info_bump: u8
+    royalty: u16
 ) -> Result<()> {
-    msg!("Creating metadata... {}", metadata_title);
+    msg!("Creating NFT...");
 
-    ctx.accounts.create_mint_account()?;
-    ctx.accounts.initialize_mint()?;
-    ctx.accounts.create_token()?;
-    ctx.accounts.mint_to_token_account()?;
-    ctx.accounts.create_metadata(metadata_title, metadata_symbol, metadata_uri)?;
+    let mint_account = CreateAccount {
+        from: ctx.accounts.mint_authority.to_account_info().clone(),
+        to: ctx.accounts.mint.to_account_info().clone(),
+    };
 
+    system_program::create_account(
+        CpiContext::new(ctx.accounts.token_program.to_account_info().clone(), mint_account),
+        LAMPORTS,
+        MINT_SIZE,
+        &ctx.accounts.token_program.key()
+    )?;
+
+    let mint = InitializeMint {
+        mint: ctx.accounts.mint.to_account_info().clone(),
+        rent: ctx.accounts.rent.to_account_info().clone(),
+    };
+
+    token::initialize_mint(
+        CpiContext::new(ctx.accounts.token_program.to_account_info().clone(), mint),
+        MINT_DECIMALS,
+        &ctx.accounts.mint_authority.key(),
+        Some(&ctx.accounts.mint_authority.key())
+    )?;
+
+    msg!("Creating token...");
+
+    let token = Create {
+        payer: ctx.accounts.mint_authority.to_account_info().to_account_info().clone(),
+        associated_token: ctx.accounts.nft_token.to_account_info().clone(),
+        authority: ctx.accounts.mint_authority.to_account_info().clone(),
+        mint: ctx.accounts.mint.to_account_info().clone(),
+        system_program: ctx.accounts.system_program.to_account_info().clone(),
+        token_program: ctx.accounts.token_program.to_account_info().clone(),
+        rent: ctx.accounts.rent.to_account_info().clone(),
+    };
+
+    associated_token::create(
+        CpiContext::new(
+            ctx.accounts.associated_token_program.to_account_info().clone(), 
+            token
+        )
+    )?;
+
+    msg!("Minting...");
+
+    let mint_to = MintTo {
+        mint: ctx.accounts.mint.to_account_info().clone(),
+        to: ctx.accounts.nft_token.to_account_info().clone(),
+        authority: ctx.accounts.mint_authority.to_account_info().clone(),
+    };
+
+    token::mint_to(
+        CpiContext::new(ctx.accounts.token_program.to_account_info().clone(), mint_to),
+        MAX_TOKEN_AMOUNT
+    )?;
+
+    let creator = match royalty {
+        0 => None,
+        _ =>
+            Some(
+                vec![Creator {
+                    address: ctx.accounts.mint_authority.key(),
+                    verified: false,
+                    share: 100,
+                }]
+            ),
+    };
+
+    invoke(
+        &create_metadata_accounts_v3(
+            ctx.accounts.token_metadata_program.key(), 
+            ctx.accounts.metadata.key(), 
+            ctx.accounts.mint.key(), 
+            ctx.accounts.mint_authority.key(), 
+            ctx.accounts.mint_authority.key(), 
+            ctx.accounts.mint_authority.key(), 
+            metadata_title, 
+            metadata_symbol, 
+            metadata_uri, 
+            creator,
+            royalty,
+            true, 
+            false, 
+            None, 
+            None,
+            None
+        ),
+        &[
+            ctx.accounts.metadata.to_account_info().clone(),
+            ctx.accounts.mint.to_account_info().clone(),
+            ctx.accounts.mint_authority.to_account_info().clone(), 
+            ctx.accounts.token_metadata_program.to_account_info().clone(),
+            ctx.accounts.token_program.to_account_info().clone(),
+            ctx.accounts.system_program.to_account_info().clone(),
+            ctx.accounts.rent.to_account_info().clone(), 
+        ],
+    )?;
 
     Ok(())
 }
